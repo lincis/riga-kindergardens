@@ -24,3 +24,36 @@ loadDataFromApi <- function(link, skip = 0) {
 all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgApplications2")
 all.admissions <- loadDataFromApi("https://opendata.riga.lv/odata/service/AdmissionStatistics")
 all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
+
+public.kgs <- all.admissions %>%
+  dplyr::select(starts_with("institution")) %>%
+  dplyr::distinct()
+
+.queryNominatim <- function(address) {
+  message(address)
+  result <- tryCatch({
+    httr::GET(
+      paste0("https://nominatim.openstreetmap.org/?format=json&q=", address, "&format=json&limit=1&countrycodes=lv")
+    ) %>% httr::content()
+    } , error = function(e) { NULL }
+  )
+  return(result)
+}
+
+queryNominatim <- function(address) {
+  result <- .queryNominatim(address)
+  while (!is.list(result)){
+    message("sleep .25 secs")
+    Sys.sleep(.25)
+    result <- .queryNominatim(address)
+  }
+  result
+}
+
+# lapply(public.kgs$institution_name %>% head(5), queryNominatim) %>% View()
+
+public.kgs %<>%
+  dplyr::mutate(
+    all.address.data = lapply(institution_name, queryNominatim)
+    , latitud
+  )
