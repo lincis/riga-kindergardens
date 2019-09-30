@@ -1,5 +1,6 @@
 library(magrittr)
 library(tidyverse)
+library(ggmap)
 
 loadDataFromApi <- function(link, skip = 0) {
   link <- paste0(link, "?$skip=", skip)
@@ -29,31 +30,44 @@ public.kgs <- all.admissions %>%
   dplyr::select(starts_with("institution")) %>%
   dplyr::distinct()
 
-.queryNominatim <- function(address) {
-  message(address)
-  result <- tryCatch({
-    httr::GET(
-      paste0("https://nominatim.openstreetmap.org/?format=json&q=", address, "&format=json&limit=1&countrycodes=lv")
-    ) %>% httr::content()
-    } , error = function(e) { NULL }
-  )
-  return(result)
-}
-
-queryNominatim <- function(address) {
-  result <- .queryNominatim(address)
-  while (!is.list(result)){
-    message("sleep .25 secs")
-    Sys.sleep(.25)
-    result <- .queryNominatim(address)
-  }
-  result
-}
-
-# lapply(public.kgs$institution_name %>% head(5), queryNominatim) %>% View()
+register_google(Sys.getenv("GOOGLE_API_KEY"))
 
 public.kgs %<>%
   dplyr::mutate(
-    all.address.data = lapply(institution_name, queryNominatim)
-    , latitud
+    all.address.data = lapply(institution_name, geocode, output = "all")
+    # , latitude = lapply(all.address.data, function(x) x[[1]]$geometry$location$lat)
   )
+
+public.kgs %<>%
+  dplyr::mutate(
+    latitude = sapply(all.address.data, function(x){
+      tryCatch(
+        x$results[[1]]$geometry$location$lat
+        , error = function(e) NA_real_
+      )
+    })
+    , longitude = sapply(all.address.data, function(x){
+      tryCatch(
+        x$results[[1]]$geometry$location$lat
+        , error = function(e) NA_real_
+      )
+    })
+    , address = sapply(all.address.data, function(x){
+      tryCatch(
+        x$results[[1]]$formatted_address
+        , error = function(e) NA_character_
+      )
+    })
+  )
+
+# # Rīgas pirmsskolas izglītības iestāde "Pienenītes"
+# public.kgs$address[153] <- "Mores iela 8, Ziemeļu rajons, Rīga, LV-1034"
+# public.kgs$latitude[153] <- 57.0178339
+# public.kgs$longitude[153] <- 24.1336834
+# 
+# # Rīgas 259. pirmsskolas izglītības iestāde
+# public.kgs$address[43] <- "Jāņa Grestes iela 3, Latgales priekšpilsēta, Rīga, LV-1021"
+# public.kgs$latitude[43] <- 56.9368019
+# public.kgs$longitude[43] <- 24.2059763
+
+saveRDS(public.kgs, here::here("r-data/public.kgs.rds"))
