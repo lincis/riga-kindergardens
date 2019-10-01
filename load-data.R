@@ -48,7 +48,7 @@ public.kgs %<>%
     })
     , longitude = sapply(all.address.data, function(x){
       tryCatch(
-        x$results[[1]]$geometry$location$lat
+        x$results[[1]]$geometry$location$lng
         , error = function(e) NA_real_
       )
     })
