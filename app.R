@@ -1,6 +1,7 @@
 library(shiny)
 library(leaflet)
 library(ggplot2)
+library(shinyWidgets)
 
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 all.admissions <- readRDS(here::here("r-data/all.admissions.rds"))
