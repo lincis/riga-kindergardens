@@ -1,5 +1,5 @@
 library(magrittr)
-library(tidyverse)
+# library(tidyverse)
 library(ggmap)
 
 loadDataFromApi <- function(link, skip = 0) {
@@ -29,11 +29,11 @@ all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEsti
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 
 public.kgs.from.applications <- all.admissions %>%
-  dplyr::select(starts_with("institution")) %>%
+  dplyr::select(dplyr::starts_with("institution")) %>%
   dplyr::distinct()
 
 missing.public.kgs <- public.kgs.from.applications %>%
-  filter(!institution_id %in% public.kgs$institution_id)
+  dplyr::filter(!institution_id %in% public.kgs$institution_id)
 
 if(nrow(missing.public.kgs) > 0) {
   register_google(Sys.getenv("GOOGLE_API_KEY"))

@@ -1,0 +1,23 @@
+dist: bionic
+sudo: false
+latex: false
+language: r
+r: release
+warnings_are_errors: false
+cache:
+  packages: true
+git:
+  depth: false
+r_packages:
+ - shiny
+ - dplyr
+ - magrittr
+ - tidyverse
+ - ggmap
+ - leaflet
+ - ggplot2
+ - rsconnect
+
+script:
+  - R -f deploy.R
+
