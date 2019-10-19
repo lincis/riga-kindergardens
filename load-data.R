@@ -26,6 +26,19 @@ all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgAp
 all.admissions <- loadDataFromApi("https://opendata.riga.lv/odata/service/AdmissionStatistics")
 all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
 
+getSchoolYear <- function(date) {
+  y <- as.numeric(format(date, "%Y"))
+  m <- as.numeric(format(date, "%m"))
+  if(m <= 9)
+    return(y)
+  y + 1
+}
+
+all.applications %<>%
+  dplyr::mutate(
+    school_year = sapply(as.Date(desirable_start_date), getSchoolYear)
+  )
+
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 
 public.kgs.from.applications <- all.admissions %>%
@@ -66,6 +79,25 @@ if(nrow(missing.public.kgs) > 0) {
     )
   public.kgs %<>% dplyr::bind_rows(missing.public.kgs)
 }
+
+public.kgs %<>% dplyr::left_join(
+  all.admissions %>%
+    dplyr::group_by(institution_id) %>%
+    dplyr::summarise(
+      has_lv = any(group_language_id == 0)
+      , has_ru = any(group_language_id == 1)
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      language = dplyr::case_when(
+        has_lv & has_ru ~ "lv-ru"
+        , has_lv ~ "lv"
+        , has_ru ~ "ru"
+        , TRUE ~ "unknown"
+      )
+    ) %>%
+    dplyr::select(institution_id, language)
+)
 
 # # Rīgas pirmsskolas izglītības iestāde "Pienenītes"
 # public.kgs$address[153] <- "Mores iela 8, Ziemeļu rajons, Rīga, LV-1034"

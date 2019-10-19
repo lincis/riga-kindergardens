@@ -7,6 +7,45 @@ public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 all.admissions <- readRDS(here::here("r-data/all.admissions.rds"))
 all.applications <- readRDS(here::here("r-data/all.applications.rds"))
 
+admissions.by.school.year <- all.admissions %>%
+  dplyr::left_join(
+    all.applications %>%
+      dplyr::group_by(institution_id, school_year, group_language) %>%
+      dplyr::summarise(Pieteikumi = n()) %>%
+      dplyr::ungroup()
+  ) %>%
+  tidyr::replace_na(list(Pieteikumi = 0)) %>%
+  dplyr::rename(Uzņemti = number_of_accepted_children) %>%
+  dplyr::select(institution_id, school_year, group_language, Uzņemti, Pieteikumi) %>%
+  tidyr::pivot_longer(c("Uzņemti", "Pieteikumi"), names_to = "Skaits") %>%
+  dplyr::mutate(school_year = as.integer(school_year))
+
+
+getColor <- function(kgs) {
+  sapply(kgs$language, function(language) {
+    if(language == "lv") {
+      "darkread"
+    } else if(language == "ru") {
+      "blue"
+    } else {
+      "purple"
+    }
+  }) %>% unname()
+}
+
+icons <- awesomeIcons(
+  icon = 'education',
+  markerColor = getColor(public.kgs)
+)
+
+getLanguage <- function(language) {
+  dplyr::case_when(
+    language == "lv" ~ "latviešu"
+    , language == "ru" ~ "mazākumtautību"
+    , TRUE ~ "jaukta"
+  )
+}
+
 ui <- fluidPage(
   fluidRow(
     column(
@@ -17,14 +56,23 @@ ui <- fluidPage(
       , tabsetPanel(
         tabPanel(
           "Pieteikumu dinamika"
-          , radioGroupButtons(
-            "timeseries.type", "Datuma veids"
-            , c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
-            , selected = "desirable_start_date"
+          , dropdownButton(
+            "Datu atlases kritēriji"
+            , radioGroupButtons(
+              "timeseries.type", "Datuma veids"
+              , c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
+              , selected = "desirable_start_date"
+            )
+            , uiOutput("language.selector")
+            , circle = TRUE, status = "danger", icon = icon("gear")
           )
           , plotOutput("application.timeseries", height = "560px")
         )
-        , tabPanel("Pieteiktie / uzņemtie", plotOutput("applications.vs.admissions", height = "580px"))
+        , tabPanel(
+          "Pieteiktie / uzņemtie"
+          , uiOutput("language.selector.admissions")
+          , plotOutput("applications.vs.admissions", height = "560px")
+        )
       )
     )
   )
@@ -33,13 +81,14 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   output$kgmap <- renderLeaflet({
-    leaflet() %>%
+    leaflet(public.kgs) %>%
       addTiles() %>%  # Add default OpenStreetMap map tiles
       addAwesomeMarkers(
-        lat = public.kgs$latitude %>% as.numeric()
-        , lng = public.kgs$longitude %>% as.numeric()
-        , popup = paste0("<b>", public.kgs$institution_name, "</b><br>", public.kgs$address)
-        , layerId = public.kgs$institution_id
+        lat = ~as.numeric(latitude), lng = ~as.numeric(longitude)
+        , popup = paste0("<b>", public.kgs$institution_name, "</b><br />", public.kgs$address, "<br />Valoda: ", getLanguage(public.kgs$language))
+        , layerId = ~institution_id
+        , icon = icons
+        , label = ~institution_name
       )
   })
   
@@ -55,12 +104,33 @@ server <- function(input, output) {
     dplyr::filter(all.applications, institution_id == input$kgmap_marker_click$id)
   })
   
+  output$language.selector <- renderUI({
+    checkboxGroupButtons(
+      "applications.language", "Mācību valoda"
+      , unique(clicked.applications()$group_language)
+      , selected = unique(clicked.applications()$group_language)
+    )
+  })
+  
+  output$language.selector.admissions <- renderUI({
+    checkboxGroupButtons(
+      "applications.language.admissions", "Mācību valoda"
+      , unique(clicked.applications()$group_language)
+      , selected = unique(clicked.applications()$group_language)
+    )
+  })
+  
   output$application.timeseries <- renderPlot({
+    language <- input$applications.language
+    if(!isTruthy(language))
+      language <- unique(clicked.applications()$group_language)
+    timeseries.type <- ifelse(isTruthy(input$timeseries.type), input$timeseries.type, "desirable_start_date")
     ggplot(
       clicked.applications() %>%
         dplyr::mutate(
-         application_month = as.Date(clicked.applications()[, input$timeseries.type]) %>% format("%Y-%m-01") %>% as.Date()
+         application_month = as.Date(clicked.applications()[, timeseries.type]) %>% format("%Y-%m-01") %>% as.Date()
         ) %>%
+        dplyr::filter(group_language %in% language) %>%
         dplyr::group_by(institution_name, institution_id, application_month) %>%
         dplyr::summarise(applications = n()) %>%
         dplyr::ungroup()
@@ -77,6 +147,34 @@ server <- function(input, output) {
       ) +
       xlab("Mēnesis") + ylab("Pieteikumu skaits") +
       scale_x_date(breaks = scales::pretty_breaks(n = 20), date_labels = "%b., %Y")
+  })
+  
+  admissions.data <- reactive({
+    req(input$kgmap_marker_click$id)
+    req(input$applications.language.admissions)
+    institution.data <- admissions.by.school.year %>%
+      dplyr::filter(
+        institution_id == input$kgmap_marker_click$id
+      )
+    language <- input$applications.language.admissions
+    if(!isTruthy(language))
+      language <- unique(institution.data$group_language)
+    message(language)
+    institution.data %>%
+      dplyr::filter(group_language %in% language)
+  })
+  
+  output$applications.vs.admissions <- renderPlot({
+    admissions.data() %>%
+      ggplot(aes(x = school_year, y = value, fill = Skaits)) +
+      geom_bar(stat="identity", color="black", position=position_dodge())+
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(hjust = 1, size = 14, angle = 45)
+        , axis.title = element_text(size = 16)
+        , axis.text.y = element_text(size = 14)
+      ) + xlab("Uzņemšanas gads") + ylab("Uzņemtie bērni") +
+      scale_x_continuous(breaks = unique(admissions.data()$school_year))
   })
 }
 

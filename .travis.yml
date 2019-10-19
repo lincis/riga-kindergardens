@@ -19,6 +19,8 @@ r_packages:
  - rsconnect
  - shinyWidgets
  - here
+ - tidyverse
+ - tidyr
 
 script:
   - R -f deploy.R
