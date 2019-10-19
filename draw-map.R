@@ -27,3 +27,5 @@ ggplot(time.series.data, aes(x = application_month, y = applications, group = in
   geom_smooth(aes(color = institution_name)) +
   # scale_color_manual(values = c("#00AFBB", "#E7B800")) +
   theme_minimal()
+
+admissions.by.school.year

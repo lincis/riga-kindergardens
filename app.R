@@ -12,7 +12,19 @@ ui <- fluidPage(
       6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "600px")
     )
     , column(
-      6, titlePanel(textOutput("selected.kg")), plotOutput("application.timeseries", height = "600px")
+      6, titlePanel(textOutput("selected.kg"))
+      , tabsetPanel(
+        tabPanel(
+          "Pieteikumu dinamika"
+          , radioGroupButtons(
+            "timeseries.type", "Datuma veids"
+            , c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
+            , selected = "desirable_start_date"
+          )
+          , plotOutput("application.timeseries", height = "560px")
+        )
+        , tabPanel("Pieteiktie / uzņemtie", plotOutput("applications.vs.admissions", height = "580px"))
+      )
     )
   )
 )
@@ -45,11 +57,13 @@ server <- function(input, output) {
   output$application.timeseries <- renderPlot({
     ggplot(
       clicked.applications() %>%
-       dplyr::mutate(application_month = as.Date(application_registered_date) %>% format("%Y-%m-01") %>% as.Date()) %>%
-       dplyr::group_by(institution_name, institution_id, application_month) %>%
-       dplyr::summarise(applications = n()) %>%
-       dplyr::ungroup()
-     , aes(x = application_month, y = applications, group = institution_name)) + 
+        dplyr::mutate(
+         application_month = as.Date(clicked.applications()[, input$timeseries.type]) %>% format("%Y-%m-01") %>% as.Date()
+        ) %>%
+        dplyr::group_by(institution_name, institution_id, application_month) %>%
+        dplyr::summarise(applications = n()) %>%
+        dplyr::ungroup()
+      , aes(x = application_month, y = applications, group = institution_name)) + 
       geom_point(aes(color = institution_name), size = 3) +
       geom_smooth(aes(color = institution_name), linetype = "dotted", alpha = .15) +
       # scale_color_manual(values = c("#00AFBB", "#E7B800")) +

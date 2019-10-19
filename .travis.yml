@@ -17,6 +17,7 @@ r_packages:
  - leaflet
  - ggplot2
  - rsconnect
+ - shinyWidgets
 
 script:
   - R -f deploy.R
