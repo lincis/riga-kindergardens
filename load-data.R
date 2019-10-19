@@ -10,7 +10,7 @@ loadDataFromApi <- function(link, skip = 0) {
     json.data <- jsonlite::fromJSON(link)
     current.df <- json.data[["value"]]
     if(is.null(current.df))
-      break
+      breakpublic.kgs
     if(nrow(current.df) < 1)
       break
     df.list <- c(df.list, list(current.df))
@@ -26,39 +26,46 @@ all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgAp
 all.admissions <- loadDataFromApi("https://opendata.riga.lv/odata/service/AdmissionStatistics")
 all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
 
-public.kgs <- all.admissions %>%
+public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
+
+public.kgs.from.applications <- all.admissions %>%
   dplyr::select(starts_with("institution")) %>%
   dplyr::distinct()
 
-register_google(Sys.getenv("GOOGLE_API_KEY"))
+missing.public.kgs <- public.kgs.from.applications %>%
+  filter(!institution_id %in% public.kgs$institution_id)
 
-public.kgs %<>%
-  dplyr::mutate(
-    all.address.data = lapply(institution_name, geocode, output = "all")
-    # , latitude = lapply(all.address.data, function(x) x[[1]]$geometry$location$lat)
-  )
-
-public.kgs %<>%
-  dplyr::mutate(
-    latitude = sapply(all.address.data, function(x){
-      tryCatch(
-        x$results[[1]]$geometry$location$lat
-        , error = function(e) NA_real_
-      )
-    })
-    , longitude = sapply(all.address.data, function(x){
-      tryCatch(
-        x$results[[1]]$geometry$location$lng
-        , error = function(e) NA_real_
-      )
-    })
-    , address = sapply(all.address.data, function(x){
-      tryCatch(
-        x$results[[1]]$formatted_address
-        , error = function(e) NA_character_
-      )
-    })
-  )
+if(nrow(missing.public.kgs) > 0) {
+  register_google(Sys.getenv("GOOGLE_API_KEY"))
+  missing.public.kgs %<>%
+    dplyr::mutate(
+      all.address.data = lapply(institution_name, geocode, output = "all")
+      # , latitude = lapply(all.address.data, function(x) x[[1]]$geometry$location$lat)
+    )
+  
+  missing.public.kgs %<>%
+    dplyr::mutate(
+      latitude = sapply(all.address.data, function(x){
+        tryCatch(
+          x$results[[1]]$geometry$location$lat
+          , error = function(e) NA_real_
+        )
+      })
+      , longitude = sapply(all.address.data, function(x){
+        tryCatch(
+          x$results[[1]]$geometry$location$lng
+          , error = function(e) NA_real_
+        )
+      })
+      , address = sapply(all.address.data, function(x){
+        tryCatch(
+          x$results[[1]]$formatted_address
+          , error = function(e) NA_character_
+        )
+      })
+    )
+  public.kgs %<>% dplyr::bind_rows(missing.public.kgs)
+}
 
 # # Rīgas pirmsskolas izglītības iestāde "Pienenītes"
 # public.kgs$address[153] <- "Mores iela 8, Ziemeļu rajons, Rīga, LV-1034"
@@ -71,3 +78,6 @@ public.kgs %<>%
 # public.kgs$longitude[43] <- 24.2059763
 
 saveRDS(public.kgs, here::here("r-data/public.kgs.rds"))
+saveRDS(all.admissions, here::here("r-data/all.admissions.rds"))
+saveRDS(all.applications, here::here("r-data/all.applications.rds"))
+saveRDS(all.private.kg, here::here("r-data/all.private.kg.rds"))
