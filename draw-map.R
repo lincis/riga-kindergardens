@@ -66,11 +66,11 @@ getSchoolYear <- function(date) {
   y + 1
 }
 
-admissions.by.school.year %>% dplyr::filter(institution_id == 801) %>% View()
+admissions.by.school.year %>% dplyr::filter(institution_id == 907) %>% View()
 
 admissions.by.school.year %>%
-  dplyr::filter(institution_id == 801) %>%
-  dplyr::filter(group_language == "latviešu") %>%
+  dplyr::filter(institution_id == 907) %>%
+  # dplyr::filter(group_language == "latviešu") %>%
   ggplot(aes(x = school_year, y = value, fill = Skaits)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
   theme_minimal() +

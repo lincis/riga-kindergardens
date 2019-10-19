@@ -47,9 +47,10 @@ getLanguage <- function(language) {
 }
 
 ui <- fluidPage(
-  fluidRow(
+  HTML('<meta name="viewport" content="width=1024">')
+  , fluidRow(
     column(
-      6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "600px")
+      6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "400px")
     )
     , column(
       6, titlePanel(textOutput("selected.kg"))
@@ -66,12 +67,12 @@ ui <- fluidPage(
             , uiOutput("language.selector")
             , circle = TRUE, status = "danger", icon = icon("gear")
           )
-          , plotOutput("application.timeseries", height = "560px")
+          , plotOutput("application.timeseries", height = "360px")
         )
         , tabPanel(
           "Pieteiktie / uzņemtie"
           , uiOutput("language.selector.admissions")
-          , plotOutput("applications.vs.admissions", height = "560px")
+          , plotOutput("applications.vs.admissions", height = "360px")
         )
       )
     )
@@ -161,7 +162,10 @@ server <- function(input, output) {
       language <- unique(institution.data$group_language)
     message(language)
     institution.data %>%
-      dplyr::filter(group_language %in% language)
+      dplyr::filter(group_language %in% language) %>%
+      dplyr::group_by(school_year, Skaits) %>%
+      dplyr::summarise(value = sum(value)) %>%
+      dplyr::ungroup()
   })
   
   output$applications.vs.admissions <- renderPlot({
@@ -173,6 +177,8 @@ server <- function(input, output) {
         axis.text.x = element_text(hjust = 1, size = 14, angle = 45)
         , axis.title = element_text(size = 16)
         , axis.text.y = element_text(size = 14)
+        , legend.text = element_text(size = 14)
+        , legend.title = element_text(size = 16)
       ) + xlab("Uzņemšanas gads") + ylab("Uzņemtie bērni") +
       scale_x_continuous(breaks = unique(admissions.data()$school_year))
   })
