@@ -18,6 +18,7 @@ r_packages:
  - ggplot2
  - rsconnect
  - shinyWidgets
+ - here
 
 script:
   - R -f deploy.R
