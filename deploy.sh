@@ -1,2 +1,2 @@
-chmod 600 id_rsa
-rsync -Pav -e "ssh -i id_rsa" --exclude=id_rsa $DEPLOY_HOST:./ ~/shiny/appdir/bernudarzi
+chmod 600 deploy_key
+rsync -Pav -e "ssh -i deploy_key" --exclude=deploy_key $DEPLOY_HOST:./ ~/shiny/appdir/bernudarzi
