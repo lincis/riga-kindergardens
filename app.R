@@ -7,18 +7,7 @@ public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 all.admissions <- readRDS(here::here("r-data/all.admissions.rds"))
 all.applications <- readRDS(here::here("r-data/all.applications.rds"))
 
-admissions.by.school.year <- all.admissions %>%
-  dplyr::left_join(
-    all.applications %>%
-      dplyr::group_by(institution_id, school_year, group_language) %>%
-      dplyr::summarise(Pieteikumi = n()) %>%
-      dplyr::ungroup()
-  ) %>%
-  tidyr::replace_na(list(Pieteikumi = 0)) %>%
-  dplyr::rename(Uzņemti = number_of_accepted_children) %>%
-  dplyr::select(institution_id, school_year, group_language, Uzņemti, Pieteikumi) %>%
-  tidyr::pivot_longer(c("Uzņemti", "Pieteikumi"), names_to = "Skaits") %>%
-  dplyr::mutate(school_year = as.integer(school_year))
+admissions.by.school.year <- readRDS(here::here("r-data/admissions.by.school.year.rds"))
 
 
 getColor <- function(kgs) {
@@ -129,7 +118,7 @@ server <- function(input, output) {
     ggplot(
       clicked.applications() %>%
         dplyr::mutate(
-         application_month = as.Date(clicked.applications()[, timeseries.type]) %>% format("%Y-%m-01") %>% as.Date()
+         application_month = clicked.applications()[, timeseries.type] %>% format("%Y-%m-01") %>% as.Date()
         ) %>%
         dplyr::filter(group_language %in% language) %>%
         dplyr::group_by(institution_name, institution_id, application_month) %>%
@@ -160,7 +149,6 @@ server <- function(input, output) {
     language <- input$applications.language.admissions
     if(!isTruthy(language))
       language <- unique(institution.data$group_language)
-    message(language)
     institution.data %>%
       dplyr::filter(group_language %in% language) %>%
       dplyr::group_by(school_year, Skaits) %>%

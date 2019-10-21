@@ -37,3 +37,5 @@ rsconnect/
 
 # Data fetched from opendata API
 /r-data/all.*.rds
+/r-data/admission*.rds
+deploy_key

@@ -22,7 +22,11 @@ loadDataFromApi <- function(link, skip = 0) {
   dplyr::bind_rows(df.list)
 }
 
-all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgApplications2")
+all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgApplications2") %>%
+  dplyr::mutate(
+    desirable_start_date = as.Date(desirable_start_date)
+    , application_registered_date = as.Date(application_registered_date)
+  )
 all.admissions <- loadDataFromApi("https://opendata.riga.lv/odata/service/AdmissionStatistics")
 all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
 
@@ -113,3 +117,17 @@ saveRDS(public.kgs, here::here("r-data/public.kgs.rds"))
 saveRDS(all.admissions, here::here("r-data/all.admissions.rds"))
 saveRDS(all.applications, here::here("r-data/all.applications.rds"))
 saveRDS(all.private.kg, here::here("r-data/all.private.kg.rds"))
+
+all.admissions %>%
+  dplyr::left_join(
+    all.applications %>%
+      dplyr::group_by(institution_id, school_year, group_language) %>%
+      dplyr::summarise(Pieteikumi = dplyr::n()) %>%
+      dplyr::ungroup()
+  ) %>%
+  tidyr::replace_na(list(Pieteikumi = 0)) %>%
+  dplyr::rename(Uzņemti = number_of_accepted_children) %>%
+  dplyr::select(institution_id, school_year, group_language, Uzņemti, Pieteikumi) %>%
+  tidyr::pivot_longer(c("Uzņemti", "Pieteikumi"), names_to = "Skaits") %>%
+  dplyr::mutate(school_year = as.integer(school_year)) %>%
+  saveRDS(here::here("r-data/admissions.by.school.year.rds"))
