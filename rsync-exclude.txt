@@ -1,0 +1,7 @@
+.git*
+.R*
+.travis.yml
+deploy_key*
+rsync-exclude.txt
+load-data.R
+draw-map.R
