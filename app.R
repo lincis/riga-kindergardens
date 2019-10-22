@@ -1,7 +1,6 @@
 library(shiny)
-library(leaflet)
-library(ggplot2)
 library(shinyWidgets)
+source(here::here("functions.R"))
 
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
 all.admissions <- readRDS(here::here("r-data/all.admissions.rds"))
@@ -36,7 +35,15 @@ getLanguage <- function(language) {
 }
 
 ui <- fluidPage(
-  HTML('<meta name="viewport" content="width=1024">')
+  tags$head(
+    tags$style(HTML("
+      .shiny-input-container, .radioGroupButtons, .shiny-bound-output {
+        display: inline-block !important;
+      }
+
+    "))
+  )
+  , HTML('<meta name="viewport" content="width=1024">')
   , fluidRow(
     column(
       6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "400px")
@@ -46,16 +53,12 @@ ui <- fluidPage(
       , tabsetPanel(
         tabPanel(
           "Pieteikumu dinamika"
-          , dropdownButton(
-            "Datu atlases kritēriji"
-            , radioGroupButtons(
-              "timeseries.type", "Datuma veids"
-              , c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
-              , selected = "desirable_start_date"
-            )
-            , uiOutput("language.selector")
-            , circle = TRUE, status = "danger", icon = icon("gear")
+          , radioGroupButtons(
+            "timeseries.type"
+            , choices = c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
+            , selected = "desirable_start_date"
           )
+          , uiOutput("language.selector")
           , plotOutput("application.timeseries", height = "360px")
         )
         , tabPanel(
@@ -95,10 +98,11 @@ server <- function(input, output) {
   })
   
   output$language.selector <- renderUI({
-    checkboxGroupButtons(
-      "applications.language", "Mācību valoda"
-      , unique(clicked.applications()$group_language)
+    pickerInput(
+      "applications.language"
+      , choices = unique(clicked.applications()$group_language)
       , selected = unique(clicked.applications()$group_language)
+      , multiple = TRUE
     )
   })
   
@@ -115,28 +119,7 @@ server <- function(input, output) {
     if(!isTruthy(language))
       language <- unique(clicked.applications()$group_language)
     timeseries.type <- ifelse(isTruthy(input$timeseries.type), input$timeseries.type, "desirable_start_date")
-    ggplot(
-      clicked.applications() %>%
-        dplyr::mutate(
-         application_month = clicked.applications()[, timeseries.type] %>% format("%Y-%m-01") %>% as.Date()
-        ) %>%
-        dplyr::filter(group_language %in% language) %>%
-        dplyr::group_by(institution_name, institution_id, application_month) %>%
-        dplyr::summarise(applications = n()) %>%
-        dplyr::ungroup()
-      , aes(x = application_month, y = applications, group = institution_name)) + 
-      geom_point(aes(color = institution_name), size = 3) +
-      geom_smooth(aes(color = institution_name), linetype = "dotted", alpha = .15) +
-      # scale_color_manual(values = c("#00AFBB", "#E7B800")) +
-      theme_minimal() +
-      theme(
-        legend.position = "none"
-        , axis.text.x = element_text(angle = 45, hjust = 1, size = 14)
-        , axis.title = element_text(size = 16)
-        , axis.text.y = element_text(size = 14)
-      ) +
-      xlab("Mēnesis") + ylab("Pieteikumu skaits") +
-      scale_x_date(breaks = scales::pretty_breaks(n = 20), date_labels = "%b., %Y")
+    plotTimeSeries(clicked.applications(), timeseries.type, language)
   })
   
   admissions.data <- reactive({
@@ -157,18 +140,7 @@ server <- function(input, output) {
   })
   
   output$applications.vs.admissions <- renderPlot({
-    admissions.data() %>%
-      ggplot(aes(x = school_year, y = value, fill = Skaits)) +
-      geom_bar(stat="identity", color="black", position=position_dodge())+
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(hjust = 1, size = 14, angle = 45)
-        , axis.title = element_text(size = 16)
-        , axis.text.y = element_text(size = 14)
-        , legend.text = element_text(size = 14)
-        , legend.title = element_text(size = 16)
-      ) + xlab("Uzņemšanas gads") + ylab("Uzņemtie bērni") +
-      scale_x_continuous(breaks = unique(admissions.data()$school_year))
+    plotAdmissions(admissions.data())
   })
 }
 
