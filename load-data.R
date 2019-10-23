@@ -28,7 +28,7 @@ all.applications <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgAp
     , application_registered_date = as.Date(application_registered_date)
   )
 all.admissions <- loadDataFromApi("https://opendata.riga.lv/odata/service/AdmissionStatistics")
-all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
+# all.private.kg <- loadDataFromApi("https://opendata.riga.lv/odata/service/KgEstimates")
 
 getSchoolYear <- function(date) {
   y <- as.numeric(format(date, "%Y"))
@@ -41,6 +41,7 @@ getSchoolYear <- function(date) {
 all.applications %<>%
   dplyr::mutate(
     school_year = sapply(as.Date(desirable_start_date), getSchoolYear)
+    , has_priority = as.logical(priority_5years_old + priority_commission + priority_sibling)
   )
 
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
@@ -116,18 +117,28 @@ public.kgs %<>% dplyr::left_join(
 saveRDS(public.kgs, here::here("r-data/public.kgs.rds"))
 saveRDS(all.admissions, here::here("r-data/all.admissions.rds"))
 saveRDS(all.applications, here::here("r-data/all.applications.rds"))
-saveRDS(all.private.kg, here::here("r-data/all.private.kg.rds"))
+# saveRDS(all.private.kg, here::here("r-data/all.private.kg.rds"))
 
 all.admissions %>%
   dplyr::left_join(
     all.applications %>%
       dplyr::group_by(institution_id, school_year, group_language) %>%
-      dplyr::summarise(Pieteikumi = dplyr::n()) %>%
+      dplyr::summarise(
+        "Pieteikumi bez prioritātes" = sum(!has_priority & chose_not_to_receive_inv == 0)
+        , "Prioritāri pieteikumi" = sum(has_priority & chose_not_to_receive_inv == 0)
+        , "Nevēlas uzaicinājumu" = sum(chose_not_to_receive_inv)
+      ) %>%
       dplyr::ungroup()
   ) %>%
   tidyr::replace_na(list(Pieteikumi = 0)) %>%
   dplyr::rename(Uzņemti = number_of_accepted_children) %>%
-  dplyr::select(institution_id, school_year, group_language, Uzņemti, Pieteikumi) %>%
-  tidyr::pivot_longer(c("Uzņemti", "Pieteikumi"), names_to = "Skaits") %>%
-  dplyr::mutate(school_year = as.integer(school_year)) %>%
+  dplyr::select(institution_id, school_year, group_language, Uzņemti, "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi") %>%
+  tidyr::pivot_longer(c("Uzņemti", "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi"), names_to = "Skaits") %>%
+  dplyr::mutate(
+    school_year = as.integer(school_year)
+    , Skaits = factor(as.character(Skaits), levels = c(
+      "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi", "Uzņemti"
+      ))
+  ) %>%
+  tidyr::replace_na(list("value" = 0)) %>%
   saveRDS(here::here("r-data/admissions.by.school.year.rds"))
