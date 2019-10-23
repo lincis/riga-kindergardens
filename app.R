@@ -1,5 +1,6 @@
 library(shiny)
 library(shinyWidgets)
+library(shinythemes)
 source(here::here("functions.R"))
 
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
@@ -35,7 +36,8 @@ getLanguage <- function(language) {
 }
 
 ui <- fluidPage(
-  tags$head(
+  theme = shinytheme("yeti")
+  , tags$head(
     tags$style(HTML("
       .shiny-input-container, .radioGroupButtons, .shiny-bound-output {
         display: inline-block !important;
@@ -98,28 +100,26 @@ server <- function(input, output) {
   })
   
   output$language.selector <- renderUI({
-    pickerInput(
+    checkboxGroupButtons(
       "applications.language"
       , choices = unique(clicked.applications()$group_language)
       , selected = unique(clicked.applications()$group_language)
-      , multiple = TRUE
+      # , multiple = TRUE
     )
   })
   
   output$language.selector.admissions <- renderUI({
     checkboxGroupButtons(
-      "applications.language.admissions", "Mācību valoda"
-      , unique(clicked.applications()$group_language)
+      "applications.language.admissions"
+      , choices = unique(clicked.applications()$group_language)
       , selected = unique(clicked.applications()$group_language)
     )
   })
   
   output$application.timeseries <- renderPlot({
-    language <- input$applications.language
-    if(!isTruthy(language))
-      language <- unique(clicked.applications()$group_language)
-    timeseries.type <- ifelse(isTruthy(input$timeseries.type), input$timeseries.type, "desirable_start_date")
-    plotTimeSeries(clicked.applications(), timeseries.type, language)
+    req(input$applications.language)
+    req(input$timeseries.type)
+    plotTimeSeries(clicked.applications(), input$timeseries.type, input$applications.language)
   })
   
   admissions.data <- reactive({
@@ -129,11 +129,8 @@ server <- function(input, output) {
       dplyr::filter(
         institution_id == input$kgmap_marker_click$id
       )
-    language <- input$applications.language.admissions
-    if(!isTruthy(language))
-      language <- unique(institution.data$group_language)
     institution.data %>%
-      dplyr::filter(group_language %in% language) %>%
+      dplyr::filter(group_language %in% input$applications.language.admissions) %>%
       dplyr::group_by(school_year, Skaits) %>%
       dplyr::summarise(value = sum(value)) %>%
       dplyr::ungroup()
