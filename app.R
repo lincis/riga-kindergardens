@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyWidgets)
 library(shinythemes)
+library(shinycssloaders)
 source(here::here("functions.R"))
 
 public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
@@ -35,7 +36,7 @@ getLanguage <- function(language) {
   )
 }
 
-ui <- fluidPage(
+ui <- wthSpinner(fluidPage(
   theme = shinytheme("yeti")
   , tags$head(
     tags$style(HTML("
@@ -48,7 +49,7 @@ ui <- fluidPage(
   # , HTML('<meta name="viewport" content="width=1024">')
   , fluidRow(
     column(
-      6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "400px")
+      6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), withSpinner(leafletOutput("kgmap", height = "400px"))
     )
     , column(
       6, titlePanel(textOutput("selected.kg"))
