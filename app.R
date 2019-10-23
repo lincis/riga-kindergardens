@@ -36,7 +36,7 @@ getLanguage <- function(language) {
   )
 }
 
-ui <- wthSpinner(fluidPage(
+ui <- fluidPage(
   theme = shinytheme("yeti")
   , tags$head(
     tags$style(HTML("
