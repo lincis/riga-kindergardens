@@ -23,7 +23,7 @@ plotTimeSeries <- function(applications.df, timeseries.type, language) {
       , axis.text.y = element_text(size = 14)
     ) +
     xlab("Mēnesis") + ylab("Pieteikumu skaits") +
-    scale_x_date(breaks = scales::pretty_breaks(n = 20), date_labels = "%b., %Y") +
+    scale_x_date(breaks = scales::pretty_breaks(n = 15), date_labels = "%b., %Y") +
     scale_color_manual(values = c("#E69F00", "#F0E442", "#56B4E9", "#009E73"))
 }
 
