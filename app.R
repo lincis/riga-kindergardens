@@ -43,7 +43,7 @@ ui <- fluidPage(
 
     "))
   )
-  , HTML('<meta name="viewport" content="width=1024">')
+  # , HTML('<meta name="viewport" content="width=1024">')
   , fluidRow(
     column(
       6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), leafletOutput("kgmap", height = "400px")
