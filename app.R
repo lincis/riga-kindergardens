@@ -45,7 +45,9 @@ ui <- fluidPage(
 
     "))
     , tags$script(src = "https://www.googletagmanager.com/gtag/js?id=UA-150842285-1")
+    , tags$script(src = "https://cdn.maptiks.com/maptiks-leaflet.min.js")
     , includeScript("google-analytics.js")
+    , includeScript("maptiks.js")
   )
   # , HTML('<meta name="viewport" content="width=1024">')
   , fluidRow(
@@ -85,7 +87,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
 
   output$kgmap <- renderLeaflet({
-    leaflet(public.kgs) %>%
+    leaflet(
+      public.kgs
+      , options = leafletOptions(maptiks_id = "Rīgas bērnudārzi")
+    ) %>%
       addTiles() %>%  # Add default OpenStreetMap map tiles
       addAwesomeMarkers(
         lat = ~as.numeric(latitude), lng = ~as.numeric(longitude)
