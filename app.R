@@ -37,8 +37,7 @@ getLanguage <- function(language) {
 }
 
 ui <- fluidPage(
-  theme = shinytheme("united")
-  , tags$head(
+  tags$head(
     tags$style(HTML("
       .shiny-input-container, .radioGroupButtons, .shiny-bound-output {
         display: inline-block !important;
@@ -50,6 +49,7 @@ ui <- fluidPage(
   , fluidRow(
     column(
       6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), withSpinner(leafletOutput("kgmap", height = "400px"))
+      , actionButton(inputId = "info", label = "Par šo lapu", icon = icon("info"))
     )
     , column(
       6, titlePanel(textOutput("selected.kg"))
@@ -74,7 +74,7 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
 
   output$kgmap <- renderLeaflet({
     leaflet(public.kgs) %>%
@@ -101,19 +101,26 @@ server <- function(input, output) {
   })
   
   output$language.selector <- renderUI({
+    if (length(input$applications.language.admissions) > 0)
+      selected.values <- input$applications.language.admissions
+    else
+      selected.values <- unique(clicked.applications()$group_language)
     checkboxGroupButtons(
       "applications.language"
       , choices = unique(clicked.applications()$group_language)
-      , selected = unique(clicked.applications()$group_language)
-      # , multiple = TRUE
+      , selected = selected.values
     )
   })
   
   output$language.selector.admissions <- renderUI({
+    if (length(input$applications.language) > 0)
+      selected.values <- input$applications.language
+    else
+      selected.values <- unique(clicked.applications()$group_language)
     checkboxGroupButtons(
       "applications.language.admissions"
       , choices = unique(clicked.applications()$group_language)
-      , selected = unique(clicked.applications()$group_language)
+      , selected = selected.values
     )
   })
   
@@ -139,6 +146,27 @@ server <- function(input, output) {
   
   output$applications.vs.admissions <- renderPlot({
     plotAdmissions(admissions.data())
+  })
+  
+  observeEvent(input$info, {
+    sendSweetAlert(
+      session = session
+      , title = "Rīgas bērnudārzu atvērtie dati"
+      , text = tags$div(
+        tags$div("© Linards Kalvāns, 2019.")
+        , tags$div(
+          "Datu avots - Latvijas atvērto datu portāls"
+          , tags$br()
+          , tags$a(target="_blank", href="https://data.gov.lv/dati/lv/dataset/pieteikumi-uznemsanai-rigas-pasvaldibas-pirmsskolas-izglitibas-iestades", "Pieteikumi")
+          , " un ", tags$a(target="_blank", href="https://data.gov.lv/dati/lv/dataset/uzaicinato-un-uznemto-bernu-skaits-rigas-pasvaldibas-pirmsskolas-izglitibas-iestades", "uzņemtie bērni")
+          , " Rīgas pašvaldības pirmsskolas izglītības iestādēs."
+        )
+        , tags$div("Dati atjaunoti: ##last_update_date##.")
+        , tags$div(tags$a(target="_blank", href="https://github.com/lincis/riga-kindergardens", "Pirmkods"))
+      )
+      , type = "info"
+      , html = TRUE
+    )
   })
 }
 
