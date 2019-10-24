@@ -132,12 +132,12 @@ all.admissions %>%
   ) %>%
   tidyr::replace_na(list(Pieteikumi = 0)) %>%
   dplyr::rename(Uzņemti = number_of_accepted_children) %>%
-  dplyr::select(institution_id, school_year, group_language, Uzņemti, "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi") %>%
-  tidyr::pivot_longer(c("Uzņemti", "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi"), names_to = "Skaits") %>%
+  dplyr::select(institution_id, school_year, group_language, Uzņemti, "Nevēlas\nuzaicinājumu", "Pieteikumi\nbez prioritātes", "Prioritāri\npieteikumi") %>%
+  tidyr::pivot_longer(c("Uzņemti", "Nevēlas\nuzaicinājumu", "Pieteikumi\nbez prioritātes", "Prioritāri\npieteikumi"), names_to = "Skaits") %>%
   dplyr::mutate(
     school_year = as.integer(school_year)
     , Skaits = factor(as.character(Skaits), levels = c(
-      "Nevēlas uzaicinājumu", "Pieteikumi bez prioritātes", "Prioritāri pieteikumi", "Uzņemti"
+      "Nevēlas\nuzaicinājumu", "Pieteikumi\nbez prioritātes", "Prioritāri\npieteikumi", "Uzņemti"
       ))
   ) %>%
   tidyr::replace_na(list("value" = 0)) %>%
