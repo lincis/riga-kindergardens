@@ -37,7 +37,7 @@ getLanguage <- function(language) {
 }
 
 ui <- fluidPage(
-  theme = shinytheme("yeti")
+  theme = shinytheme("united")
   , tags$head(
     tags$style(HTML("
       .shiny-input-container, .radioGroupButtons, .shiny-bound-output {
@@ -55,10 +55,10 @@ ui <- fluidPage(
       6, titlePanel(textOutput("selected.kg"))
       , tabsetPanel(
         tabPanel(
-          "Pieteikumu dinamika"
+          "Dinamika"
           , radioGroupButtons(
             "timeseries.type"
-            , choices = c("Vēlamais uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
+            , choices = c("Uzsākšanas datums" = "desirable_start_date", "Pieteikuma datums" = "application_registered_date")
             , selected = "desirable_start_date"
           )
           , uiOutput("language.selector")
