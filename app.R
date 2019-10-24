@@ -71,7 +71,13 @@ ui <- fluidPage(
       )
     )
   )
-  , fluidRow(column(2, offset = 10 , actionButton(inputId = "info", label = "Par šo lapu", icon = icon("info"))))
+  , fluidRow(
+    column(
+      12
+      , actionLink(inputId = "info", label = "Par aplikāciju", icon = icon("info"), style = "float: right")
+      , actionLink(inputId = "application.info", label = "Kāpēc tik maz pieteikumu", icon = icon("question-circle"), style = "float: right; padding-right: 10pt;")
+    )
+  )
 )
 
 server <- function(input, output, session) {
@@ -153,18 +159,32 @@ server <- function(input, output, session) {
       session = session
       , title = "Rīgas bērnudārzu atvērtie dati"
       , text = tags$div(
-        tags$div("© Linards Kalvāns, 2019.")
-        , tags$div(
-          "Datu avots - Latvijas atvērto datu portāls"
-          , tags$br()
+        style = "text-align: justify; font-size: 12pt;"
+        , tags$p("© Linards Kalvāns, 2019.")
+        , tags$p(
+          "Datu avots - Latvijas atvērto datu portāls: "
           , tags$a(target="_blank", href="https://data.gov.lv/dati/lv/dataset/pieteikumi-uznemsanai-rigas-pasvaldibas-pirmsskolas-izglitibas-iestades", "Pieteikumi")
           , " un ", tags$a(target="_blank", href="https://data.gov.lv/dati/lv/dataset/uzaicinato-un-uznemto-bernu-skaits-rigas-pasvaldibas-pirmsskolas-izglitibas-iestades", "uzņemtie bērni")
           , " Rīgas pašvaldības pirmsskolas izglītības iestādēs."
         )
-        , tags$div("Dati atjaunoti: ##last_update_date##.")
-        , tags$div(tags$a(target="_blank", href="https://github.com/lincis/riga-kindergardens", "Pirmkods"))
+        , tags$p("Dati atjaunoti: ##last_update_date##.")
+        , tags$p("Pirmkods: ", tags$a(target="_blank", href="https://github.com/lincis/riga-kindergardens", "https://github.com/lincis/riga-kindergardens"))
       )
       , type = "info"
+      , html = TRUE
+    )
+  })
+  
+  observeEvent(input$application.info, {
+    sendSweetAlert(
+      session = session
+      , title = "Kāpēc pieteikumu izskatās par maz?"
+      , text = tags$div(
+        style = "text-align: justify; font-size: 12pt;"
+        , tags$p("Pirkārt, dati ir pieejami, kopš 2011. gada pieteikumi uzņemšanai līdz pat 2017. varēja tikt un tika iesniegti pirms tam.")
+        , tags$p("Otrkārt, mana hipotēze ir, ka datu kopā ir pieejami tikai elektroniski reģistrētie pieteikumi, diemžēl mēģinājums sazināties ar datu uzturētājiem caur atvērto datu portālu bija nesekmīgs")
+      )
+      , type = "warning"
       , html = TRUE
     )
   })

@@ -119,17 +119,15 @@ saveRDS(all.admissions, here::here("r-data/all.admissions.rds"))
 saveRDS(all.applications, here::here("r-data/all.applications.rds"))
 # saveRDS(all.private.kg, here::here("r-data/all.private.kg.rds"))
 
-all.admissions %>%
-  dplyr::left_join(
-    all.applications %>%
-      dplyr::group_by(institution_id, school_year, group_language) %>%
-      dplyr::summarise(
-        "Pieteikumi\nbez prioritātes" = sum(!has_priority & chose_not_to_receive_inv == 0)
-        , "Prioritāri\npieteikumi" = sum(has_priority & chose_not_to_receive_inv == 0)
-        , "Nevēlas\nuzaicinājumu" = sum(chose_not_to_receive_inv)
-      ) %>%
-      dplyr::ungroup()
+all.applications %>%
+  dplyr::group_by(institution_id, school_year, group_language) %>%
+  dplyr::summarise(
+    "Pieteikumi\nbez prioritātes" = sum(!has_priority & chose_not_to_receive_inv == 0)
+    , "Prioritāri\npieteikumi" = sum(has_priority & chose_not_to_receive_inv == 0)
+    , "Nevēlas\nuzaicinājumu" = sum(chose_not_to_receive_inv)
   ) %>%
+  dplyr::ungroup() %>%
+  dplyr::left_join(all.admissions) %>%
   tidyr::replace_na(list(Pieteikumi = 0)) %>%
   dplyr::rename(Uzņemti = number_of_accepted_children) %>%
   dplyr::select(institution_id, school_year, group_language, Uzņemti, "Nevēlas\nuzaicinājumu", "Pieteikumi\nbez prioritātes", "Prioritāri\npieteikumi") %>%
