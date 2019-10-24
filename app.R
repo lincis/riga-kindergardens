@@ -49,7 +49,6 @@ ui <- fluidPage(
   , fluidRow(
     column(
       6, titlePanel("Pieteikumi Rīgas pašvaldības bērnudārzos"), withSpinner(leafletOutput("kgmap", height = "400px"))
-      , actionButton(inputId = "info", label = "Par šo lapu", icon = icon("info"))
     )
     , column(
       6, titlePanel(textOutput("selected.kg"))
@@ -72,6 +71,7 @@ ui <- fluidPage(
       )
     )
   )
+  , fluidRow(column(2, offset = 10 , actionButton(inputId = "info", label = "Par šo lapu", icon = icon("info"))))
 )
 
 server <- function(input, output, session) {
