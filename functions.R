@@ -9,7 +9,7 @@ plotTimeSeries <- function(applications.df, timeseries.type, language) {
       ) %>%
       dplyr::filter(group_language %in% language) %>%
       dplyr::group_by(institution_name, institution_id, application_month) %>%
-      dplyr::summarise(applications = n()) %>%
+      dplyr::summarise(applications = dplyr::n()) %>%
       dplyr::ungroup()
     , aes(x = application_month, y = applications, group = institution_name)) + 
     geom_point(aes(color = institution_name), size = 3) +

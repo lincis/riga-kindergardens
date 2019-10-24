@@ -124,9 +124,9 @@ all.admissions %>%
     all.applications %>%
       dplyr::group_by(institution_id, school_year, group_language) %>%
       dplyr::summarise(
-        "Pieteikumi bez prioritātes" = sum(!has_priority & chose_not_to_receive_inv == 0)
-        , "Prioritāri pieteikumi" = sum(has_priority & chose_not_to_receive_inv == 0)
-        , "Nevēlas uzaicinājumu" = sum(chose_not_to_receive_inv)
+        "Pieteikumi\nbez prioritātes" = sum(!has_priority & chose_not_to_receive_inv == 0)
+        , "Prioritāri\npieteikumi" = sum(has_priority & chose_not_to_receive_inv == 0)
+        , "Nevēlas\nuzaicinājumu" = sum(chose_not_to_receive_inv)
       ) %>%
       dplyr::ungroup()
   ) %>%
