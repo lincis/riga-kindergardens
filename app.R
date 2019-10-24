@@ -44,6 +44,8 @@ ui <- fluidPage(
       }
 
     "))
+    , tags$script(src = "https://www.googletagmanager.com/gtag/js?id=UA-150842285-1")
+    , includeScript("google-analytics.js")
   )
   # , HTML('<meta name="viewport" content="width=1024">')
   , fluidRow(
