@@ -162,6 +162,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$info, {
+    last.update.date <- format(
+      file.info(here::here("r-data/admissions.by.school.year.rds"))$mtime
+      , "%d.%m.%Y."
+    )
     sendSweetAlert(
       session = session
       , title = "Rīgas bērnudārzu atvērtie dati"
@@ -174,7 +178,7 @@ server <- function(input, output, session) {
           , " un ", tags$a(target="_blank", href="https://data.gov.lv/dati/lv/dataset/uzaicinato-un-uznemto-bernu-skaits-rigas-pasvaldibas-pirmsskolas-izglitibas-iestades", "uzņemtie bērni")
           , " Rīgas pašvaldības pirmsskolas izglītības iestādēs."
         )
-        , tags$p("Dati atjaunoti: ##last_update_date##.")
+        , tags$p("Dati atjaunoti: ", last.update.date)
         , tags$p("Pirmkods: ", tags$a(target="_blank", href="https://github.com/lincis/riga-kindergardens", "https://github.com/lincis/riga-kindergardens"))
       )
       , type = "info"
