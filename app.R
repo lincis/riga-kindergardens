@@ -192,8 +192,7 @@ server <- function(input, output, session) {
       , title = "Kāpēc pieteikumu izskatās par maz?"
       , text = tags$div(
         style = "text-align: justify; font-size: 12pt;"
-        , tags$p("Pirkārt, dati ir pieejami, kopš 2011. gada pieteikumi uzņemšanai līdz pat 2017. varēja tikt un tika iesniegti pirms tam.")
-        , tags$p("Otrkārt, mana hipotēze ir, ka datu kopā ir pieejami tikai elektroniski reģistrētie pieteikumi, diemžēl mēģinājums sazināties ar datu uzturētājiem caur atvērto datu portālu bija nesekmīgs")
+        , tags$p("Datos ir iekļauti tikai atvērtie pieteikumi, līdz ar to bērni, kas uzņemti vai atteikušies no uzņemšanas datos vairs neparādās.")
       )
       , type = "warning"
       , html = TRUE
