@@ -90,7 +90,9 @@ if(nrow(missing.public.kgs) > 0) {
   public.kgs %<>% dplyr::bind_rows(missing.public.kgs)
 }
 
-public.kgs %<>% dplyr::left_join(
+public.kgs %<>% 
+  dplyr::select(-language) %>%
+  dplyr::left_join(
   all.admissions %>%
     dplyr::group_by(institution_id) %>%
     dplyr::summarise(
