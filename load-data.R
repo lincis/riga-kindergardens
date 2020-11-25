@@ -44,7 +44,12 @@ all.applications %<>%
     , has_priority = as.logical(priority_5years_old + priority_commission + priority_sibling)
   )
 
-public.kgs <- readRDS(here::here("r-data/public.kgs.rds"))
+public.kgs <- readRDS(here::here("r-data/public.kgs.rds")) %>%
+  dplyr::mutate(
+    latitude = unlist(latitude),
+    longitude = unlist(longitude),
+    address = unlist(address)
+  )
 
 public.kgs.from.applications <- all.admissions %>%
   dplyr::select(dplyr::starts_with("institution")) %>%
